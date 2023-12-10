@@ -1,152 +1,152 @@
 -- The Stakeholder is an app developer who needs analysis to decide what type of app to build. 
 -- They are seeking answers to questions like 1) What app categories are most popular 2)What price should they set 3) How can they maximise their ratings 
 
-Select *  FROM AppleStore
-Select * From appleStore_description
+select*  from AppleStore
+select * from appleStore_description
 
 -- EDA
 -- Checking the number of unique apps in both the tables (for missing values in case of discrenencies)
 
-SELECT COUNT(DISTINCT id) AS UniqueAppIDs
-FROM AppleStore
+select count(distinct id) as UniqueAppIDs
+from AppleStore
 
-SELECT COUNT(DISTINCT id) AS UniqueAppIDs
-FROM appleStore_description
+select count(distinct id) as UniqueAppIDs
+from appleStore_description
 
 -- Check for any missing values in the key fields 
 
-Select Count(*) As MissingValues
-FROM AppleStore
-Where track_name IS null OR user_rating IS null OR prime_genre IS null
+select count(*) as MissingValues
+from AppleStore
+where track_name IS null OR user_rating IS null OR prime_genre IS null
 
-Select Count(*) As MissingValues
-FROM appleStore_description
-Where app_desc IS null
+select count(*) as MissingValues
+from appleStore_description
+where app_desc IS null
 
 -- Finding the number of apps per genre
 
-Select prime_genre, COUNT(*) AS NumApps
-From AppleStore 
-Group By prime_genre
-Order By NumApps DESC
+select prime_genre, count(*) as NumApps
+from AppleStore 
+group by prime_genre
+order by NumApps desc
 
 --Getting an overview of the apps ratings
 
-Select min(user_rating) AS MinRating,
-       max(user_rating) AS MaxRating,
-	   avg(user_rating) AS AvgRating
- FROM AppleStore
+select min(user_rating) as MinRating,
+       max(user_rating) as MaxRating,
+	   avg(user_rating) as AvgRating
+ from AppleStore
 
 
  ** DATA ANALYSIS**
 
  --Determine whether the paid apps have higher ratings then the free apps
 
- SELECT CASE 
- WHEN price > 0 THEN 'Paid'
- ELSE 'Free' 
-      END AS App_Type,
- avg(user_rating) AS Avg_rating
- FROM AppleStore
- GROUP BY App_Type
+ select case 
+ when price > 0 then 'Paid'
+ else 'Free' 
+      end as App_Type,
+ avg(user_rating) as Avg_rating
+ from AppleStore
+ group by App_Type
 
- --This query repeats the CASE expression in the GROUP BY clause.
+ --This query repeats the case expression in the group by clause.
 
-SELECT 
-    CASE 
-        WHEN price > 0 THEN 'Paid'
-        ELSE 'Free' 
-    END AS App_Type,
-    AVG(user_rating) AS Avg_rating
-FROM AppleStore
-GROUP BY 
-    CASE 
-        WHEN price > 0 THEN 'Paid'
-        ELSE 'Free' 
-    END;
+select 
+    case 
+        when price > 0 then 'Paid'
+        else 'Free' 
+    end as App_Type,
+    AVG(user_rating) as Avg_rating
+from AppleStore
+group by 
+    case 
+        when price > 0 then 'Paid'
+        else 'Free' 
+    end;
 
  -- Check if apps with more supported languages have higher ratings
 
-SELECT CASE 
-		WHEN lang_num < 10 THEN '<10 languages'
-		WHEN lang_num  BETWEEN 10 AND 30 THEN '10 - 30 languages'
-		ELSE '>30 languages'
-       END AS language_bucket,
-	avg(user_rating) AS Avg_Rating
-FROM AppleStore
-GROUP BY language_bucket
-ORDER BY Avg_Rating DESC
+select case 
+		when lang_num < 10 then '<10 languages'
+		when lang_num  between 10 and 30 then '10 - 30 languages'
+		else '>30 languages'
+       end as language_bucket,
+	avg(user_rating) as Avg_Rating
+from AppleStore
+group by language_bucket
+order by Avg_Rating desc
 
 -- Trying with SUB QUERY
--- In this query, I wrapped the original query in a subquery, and then I used the alias language_bucket in the outer query's GROUP BY clause.
+-- In this query, I wrapped the original query in a subquery, and then I used the alias language_bucket in the outer query's group by clause.
 
-SELECT language_bucket, AVG(user_rating) AS Avg_Rating
-FROM (
-    SELECT 
-        CASE 
-            WHEN lang_num < 10 THEN '<10 languages'
-            WHEN lang_num BETWEEN 10 AND 30 THEN '10 - 30 languages'
-            ELSE '>30 languages'
-        END AS language_bucket,
+select language_bucket, AVG(user_rating) as Avg_Rating
+from (
+    select 
+        case 
+            when lang_num < 10 then '<10 languages'
+            when lang_num between 10 and 30 then '10 - 30 languages'
+            else '>30 languages'
+        end as language_bucket,
         user_rating
-    FROM AppleStore
-) AS subquery
-GROUP BY language_bucket
-ORDER BY Avg_Rating DESC;
+    from AppleStore
+) as subquery
+group by language_bucket
+order by Avg_Rating desc;
 
 -- Check genre with low ratings 
 -- ( Using TOP instead of LIMIT)
 
-SELECT TOP 10 prime_genre, 
-       avg(user_rating) AS Avg_Rating
-FROM AppleStore
-GROUP BY Prime_genre
-ORDER BY Avg_Rating ASC
+select TOP 10 prime_genre, 
+       avg(user_rating) as Avg_Rating
+from AppleStore
+group by Prime_genre
+order by Avg_Rating asC
 
 -- Checking if there is a corelation between the length of the app description and the user rating 
 
-SELECT CASE 
-			WHEN LENGTH(b.app_desc)<500 THEN 'Short'
-			WHEN LENGTH(b.app_desc) BETWEEN 500 AND 1000 THEN 'Medium'
-			ELSE 'Long'
-	   END AS description_length_bucket,
-	   avg(A.user_rating) AS average_rating
+select case 
+			when LENGTH(b.app_desc)<500 then 'Short'
+			when LENGTH(b.app_desc) between 500 and 1000 then 'Medium'
+			else 'Long'
+	   end as description_length_bucket,
+	   avg(A.user_rating) as average_rating
 
-FROM AppleStore AS a
-JOIN appleStore_description AS b
+from AppleStore as a
+join appleStore_description as b
 ON A.id = B.id 
-GROUP BY description_length_bucket
-ORDER BY average_rating DESC
+group by description_length_bucket
+order by average_rating desc
 
 -- In Microsoft SQL Server, the function for getting the length of a string is LEN, not LENGTH as in some other database systems.
-SELECT 
-    CASE 
-        WHEN LEN(b.app_desc) < 500 THEN 'Short'
-        WHEN LEN(b.app_desc) BETWEEN 500 AND 1000 THEN 'Medium'
-        ELSE 'Long'
-    END AS description_length_bucket,
-    AVG(A.user_rating) AS average_rating
-FROM AppleStore AS A
-JOIN appleStore_description AS B ON A.id = B.id
-GROUP BY 
-    CASE 
-        WHEN LEN(b.app_desc) < 500 THEN 'Short'
-        WHEN LEN(b.app_desc) BETWEEN 500 AND 1000 THEN 'Medium'
-        ELSE 'Long'
-    END
-ORDER BY average_rating DESC;
+select 
+    case 
+        when LEN(b.app_desc) < 500 then 'Short'
+        when LEN(b.app_desc) between 500 and 1000 then 'Medium'
+        else 'Long'
+    end as description_length_bucket,
+    AVG(A.user_rating) as average_rating
+from AppleStore as A
+join appleStore_description as B ON A.id = B.id
+group by 
+    case 
+        when LEN(b.app_desc) < 500 then 'Short'
+        when LEN(b.app_desc) between 500 and 1000 then 'Medium'
+        else 'Long'
+    end
+order by average_rating desc;
 
 
 -- Checking the TOP rated aps for each genre 
 -- ( Using the rank over window function - It assigns a rank to each row withoin a window of rows and then 
 -- partioning by genre which creates a seperate window for each unique genre)
 
-SELECT prime_genre, track_name,user_rating 
-FROM ( 
-	  SELECT prime_genre, track_name,user_rating, 
-	  RANK() OVER(PARTITION BY prime_genre ORDER BY user_rating DESC, rating_count_tot DESC) AS rank
-	  FROM AppleStore) AS a
-	  WHERE a.rank = 1
+select prime_genre, track_name,user_rating 
+from ( 
+	  select prime_genre, track_name,user_rating, 
+	  RANK() OVER(PARTITION by prime_genre order by user_rating desc, rating_count_tot desc) as rank
+	  from AppleStore) as a
+	  where a.rank = 1
 
 -- * INSIGHTS *
 
